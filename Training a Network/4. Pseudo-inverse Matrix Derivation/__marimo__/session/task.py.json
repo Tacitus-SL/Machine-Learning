@@ -1,0 +1,46 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.24.0",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "e822a894973d8d7226eb2211397eff60",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "ff82e350f4afd15c00cc35c6db8f3f45",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"pseudo-inverse-matrix-derivation\">Pseudo-inverse Matrix Derivation</h1>\n<span class=\"paragraph\">Order the cards to derive the pseudo-inverse solution of linear\nregression from the MSE gradient.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "e9590816eb772187f00cf80463170def",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "f609fa10ca3932d16c7f72ac5f7e54b9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

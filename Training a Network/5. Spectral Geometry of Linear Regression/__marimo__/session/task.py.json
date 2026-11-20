@@ -1,0 +1,116 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.24.0",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "6005f0a5594ca93889c50d92fa881269",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "23be50fe3402d1287c9a9f4085263eec",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"spectral-geometry-of-linear-regression\">Spectral Geometry of Linear Regression</h1>\n<span class=\"paragraph\">Explore how the eigenvalues of <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex> shape the loss landscape of linear regression, then choose eigenvalues that make gradient descent converge as fast as possible.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "ed07243a0e90b7547379132a46e186aa",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"spectral-geometry-of-linear-regression\">Spectral Geometry of Linear Regression</h1>\n<span class=\"paragraph\">Before analyzing linear regression carefully, it helps to see the\ngeometry hidden inside <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex>.</span>\n<h2 id=\"the-canonical-decomposition-of-xt-x\">The canonical decomposition of <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex></h2>\n<span class=\"paragraph\">For any real design matrix <marimo-tex class=\"arithmatex\">||(X||)</marimo-tex>, the matrix</span>\n<marimo-tex class=\"arithmatex\">||[A = X^T X||]</marimo-tex><span class=\"paragraph\">is symmetric and positive semidefinite. By the spectral theorem, it\nhas an orthogonal eigendecomposition</span>\n<marimo-tex class=\"arithmatex\">||[X^T X = Q \\Lambda Q^T,||]</marimo-tex><span class=\"paragraph\">often remembered informally as a rotation-reflection matrix <marimo-tex class=\"arithmatex\">||(Q||)</marimo-tex>, a\ndiagonal scaling matrix <marimo-tex class=\"arithmatex\">||(\\Lambda||)</marimo-tex>, and the inverse rotation <marimo-tex class=\"arithmatex\">||(Q^T||)</marimo-tex>.\nIn this demo we write the diagonal matrix as <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex>.</span>\n<span class=\"paragraph\">The pieces have precise roles:</span>\n<ul>\n<li><marimo-tex class=\"arithmatex\">||(Q||)</marimo-tex> is orthogonal: <marimo-tex class=\"arithmatex\">||(Q^TQ = QQ^T = I||)</marimo-tex>. Its columns are\n  perpendicular unit eigenvectors.</li>\n<li><marimo-tex class=\"arithmatex\">||(L = \\operatorname{diag}(\\lambda_1, \\lambda_2)||)</marimo-tex> contains the\n  eigenvalues of <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex>.</li>\n<li>Because <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex> is positive semidefinite, every eigenvalue is\n  nonnegative.</li>\n<li>The quadratic landscape <marimo-tex class=\"arithmatex\">||(w^T X^T Xw||)</marimo-tex> is flat in directions with\n  small eigenvalues and steep in directions with large eigenvalues.</li>\n<li>If an eigenvalue is zero or very close to zero, the inverse or\n  pseudo-inverse can strongly amplify even small noise.</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "266533b482121c3bc5d4f6a933338303",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "005a2adc1be2d77cd7bb7c53ce2802eb",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "c319367e7cc5d9904acbeade18464c4f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"build-q-build-l-and-watch-the-landscape\">Build <marimo-tex class=\"arithmatex\">||(Q||)</marimo-tex>, build <marimo-tex class=\"arithmatex\">||(L||)</marimo-tex>, and watch the landscape</h2>\n<span class=\"paragraph\">The angle control rotates the first eigenvector of the\ntwo-dimensional <marimo-tex class=\"arithmatex\">||(Q||)</marimo-tex> matrix. The eigenvalue controls set\n<marimo-tex class=\"arithmatex\">||(\\lambda_1||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex> directly, so smaller values make that\ndirection flatter and more noise-sensitive. Together they create</span>\n<marimo-tex class=\"arithmatex\">||[X^T X = QLQ^T.||]</marimo-tex><span class=\"paragraph\">The contour plot shows levels of <marimo-tex class=\"arithmatex\">||(w^T X^T Xw||)</marimo-tex>. The solid colored\narrows are unit eigenvectors, and the dashed colored axes have\nlength <marimo-tex class=\"arithmatex\">||(1 / \\sqrt{\\lambda_i}||)</marimo-tex>. The orange path shows 20 gradient\ndescent steps on the same quadratic. The pink points show\npseudo-inverse solutions to</span>\n<marimo-tex class=\"arithmatex\">||[Xw = \\varepsilon, \\qquad w = (X^T X)^+X^T\\varepsilon,||]</marimo-tex><span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(\\varepsilon||)</marimo-tex> is random noise -- one different <marimo-tex class=\"arithmatex\">||(\\varepsilon||)</marimo-tex>\nvector per gradient descent step. When an eigenvalue is small,\nthose errors can become surprisingly large weights.</span>\n<span class=\"paragraph\">Use the controls to look for the eigenvalues that make gradient\ndescent converge as fast as possible. The relevant warning light\nis the condition number</span>\n<marimo-tex class=\"arithmatex\">||[\\kappa = \\frac{\\max(\\lambda_1, \\lambda_2)}{\\min(\\lambda_1, \\lambda_2)}.||]</marimo-tex></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "aaab53c495f5e8aeae732f663ff6229a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "dc023ac52623004ad5c507219bda3a2f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "00322131255f340038f90b5f789854fd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"task-make-gradient-descent-as-fast-as-possible\">Task: make gradient descent as fast as possible</h2>\n<span class=\"paragraph\">For a two-dimensional quadratic loss with Hessian geometry\ncontrolled by eigenvalues <marimo-tex class=\"arithmatex\">||(\\lambda_1||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(\\lambda_2||)</marimo-tex>, gradient\ndescent converges fastest when the landscape is as round as\npossible. Use the sliders above to choose eigenvalues in\n<marimo-tex class=\"arithmatex\">||([0.1, 10]||)</marimo-tex> that make gradient descent as fast as possible --\nyour answer is read directly from wherever the sliders are\ncurrently set (no code to write). There's no live right/wrong\nfeedback; only the actual submission is graded on the condition\nnumber</span>\n<marimo-tex class=\"arithmatex\">||[\\kappa = \\frac{\\lambda_{max}}{\\lambda_{min}}.||]</marimo-tex></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "b14a957b83e6e5def1b2265e658d5c79",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "aab5ee9053f3408d726251820b024ade",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "31ff689191f5bc494bd4c5613e8f18d4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"conclusion\">Conclusion</h2>\n<span class=\"paragraph\">The eigenvalues of <marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex> control the practical difficulty of\nlinear regression. Large differences between eigenvalues make the\nloss landscape long and narrow, so gradient descent may move\nslowly or awkwardly unless the step size is chosen with care.\nVery small eigenvalues also make the pseudo-inverse unstable: tiny\nnoise in <marimo-tex class=\"arithmatex\">||(Xw = \\varepsilon||)</marimo-tex> can be amplified into large changes in\n<marimo-tex class=\"arithmatex\">||(w||)</marimo-tex>.</span>\n<span class=\"paragraph\">So both optimization and closed-form solving depend on the same\ngeometry. Gradient descent does not always work well, and even\nthe pseudo-inverse is not always stable; the eigenvalues of\n<marimo-tex class=\"arithmatex\">||(X^T X||)</marimo-tex> are the warning lights.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
