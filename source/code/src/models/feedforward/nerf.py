@@ -27,13 +27,23 @@ class TinyNeRF(nn.Module):
         self.color_head = nn.Linear(encoded_size, 3)
         ## Define self.field (Linear -> ReLU -> Linear -> ReLU, hidden_size wide)
         ## and the two heads that read its output
-        ## YOUR CODE HERE
+        self.field = nn.Sequential(
+            nn.Linear(encoded_size, self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.ReLU(),
+        )
+        self.density_head = nn.Linear(self.hidden_size, 1)
+        self.color_head = nn.Linear(self.hidden_size, 3)
 
     def positional_encoding(self, coords):
         """Append sine and cosine features at powers-of-two frequencies."""
         encoded = [coords]
         ## Append sin(2^k pi coords) and cos(2^k pi coords) for k = 0, ..., n_frequencies - 1
-        ## YOUR CODE HERE
+        for frequency_index in range(self.n_frequencies):
+            frequency = (2.0 ** frequency_index) * torch.pi
+            encoded.append(torch.sin(frequency * coords))
+            encoded.append(torch.cos(frequency * coords))
         if len(encoded) == 1:
             encoded.extend(torch.zeros_like(coords) for _ in range(2 * self.n_frequencies))
         return torch.cat(encoded, dim=-1)
@@ -73,7 +83,14 @@ class TinyNeRF(nn.Module):
         ## Opacity alpha = 1 - exp(-density * delta); the weight of a sample is
         ## its alpha times the transparency of all the samples before it;
         ## rgb = sum of weight * color along the ray
-        ## YOUR CODE HERE
+        alpha = 1.0 - torch.exp(-density * deltas)
+        transmittance = torch.cumprod(
+            torch.cat((torch.ones_like(alpha[:, :1]),
+                       1.0 - alpha[:, :-1] + 1.0e-10), dim=1),
+            dim=1,
+        )
+        weights = transmittance * alpha
+        rgb = (weights[..., None] * color).sum(dim=1)
         if weights is None:
             weights = torch.zeros_like(density)
             rgb = color.sum(dim=(1, 2), keepdim=False)[:, None] * 0

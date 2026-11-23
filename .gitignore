@@ -30,8 +30,8 @@ env/
 *.parquet
 *.zip
 *.tar.gz
+*.npz
 data/
-datasets/
 
 .DS_Store
 Thumbs.db

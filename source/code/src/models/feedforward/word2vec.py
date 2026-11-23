@@ -40,31 +40,24 @@ class BinaryIndexTree:
     def __call__(self, context_word):
         device = context_word.device
         context_word = context_word.detach().cpu().view(-1).tolist()
-        fallback_batch_size = len(context_word)
+        batch_size = len(context_word)
         # Fallback code for this task: keeps the notebook runnable before the method is solved.
-        fallback = {
-            'path': torch.zeros(
-                fallback_batch_size,
-                self.max_path_length,
-                dtype=torch.long,
-                device=device,
-            ),
-            'targets': torch.zeros(
-                fallback_batch_size,
-                self.max_path_length,
-                dtype=torch.float32,
-                device=device,
-            ),
-            'mask': torch.ones(
-                fallback_batch_size,
-                self.max_path_length,
-                dtype=torch.float32,
-                device=device,
-            ),
+        paths = []
+        targets_list = []
+        for word_idx in context_word:
+            path, targets = self.path_and_targets(word_idx)
+            paths.append(path)
+            targets_list.append(targets)
+        
+        path_tensor = torch.tensor(paths, dtype=torch.long, device=device)
+        targets_tensor = torch.tensor(targets_list, dtype=torch.float32, device=device)
+        mask_tensor = torch.ones(batch_size, self.max_path_length, dtype=torch.float32, device=device)
+        
+        return {
+            'path': path_tensor,
+            'targets': targets_tensor,
+            'mask': mask_tensor,
         }
-
-        ## YOUR CODE HERE
-        return fallback
 
 
 class HierarchicalSoftmax(torch.nn.Module):
@@ -79,7 +72,13 @@ class HierarchicalSoftmax(torch.nn.Module):
         )
         torch.nn.init.zeros_(self.decoder.weight)
 
-        ## YOUR CODE HERE
+        self.embedding_dim = int(embedding_dim)
+        self.targets = BinaryIndexTree(vocab_size)
+        self.decoder = torch.nn.Embedding(
+            self.targets.num_internal_nodes,
+            self.embedding_dim,
+        )
+        torch.nn.init.normal_(self.decoder.weight, mean=0.0, std=0.02)
 
     @property
     def num_internal_nodes(self):
@@ -117,8 +116,6 @@ class HierarchicalSoftmax(torch.nn.Module):
             'per_word_loss': fallback_per_word_loss,
             'loss': fallback_per_word_loss.mean(),
         }
-
-        ## YOUR CODE HERE
         return fallback
 
 
@@ -137,7 +134,16 @@ class Word2Vec(torch.nn.Module):
         self.decoder = self.hierarchical_softmax.decoder
         self.num_internal_nodes = self.hierarchical_softmax.num_internal_nodes
 
-        ## YOUR CODE HERE
+        self.vocab_size = int(vocab_size)
+        self.embedding_dim = int(embedding_dim)
+        self.encoder = torch.nn.Embedding(self.vocab_size, self.embedding_dim)
+        self.hierarchical_softmax = HierarchicalSoftmax(
+            self.embedding_dim,
+            self.vocab_size,
+        )
+        self.decoder = self.hierarchical_softmax.decoder
+        self.num_internal_nodes = self.hierarchical_softmax.num_internal_nodes
+        torch.nn.init.normal_(self.encoder.weight, mean=0.0, std=0.02)
 
 
     def forward(self, batch):
@@ -148,29 +154,14 @@ class Word2Vec(torch.nn.Module):
         }
         batch['postprocessed'] = {}
         if 'context_word' in batch['data']:
-            target_tensors = self.hierarchical_softmax.targets(batch['data']['context_word'])
-            fallback_logits = torch.zeros_like(target_tensors['targets'])
-            fallback_probabilities = torch.sigmoid(fallback_logits)
-            fallback_target_probabilities = torch.where(
-                target_tensors['targets'].bool(),
-                fallback_probabilities,
-                1.0 - fallback_probabilities,
-            )
-            fallback_per_node_loss = F.binary_cross_entropy_with_logits(
-                fallback_logits,
-                target_tensors['targets'],
-                reduction='none',
-            )
-            fallback_per_word_loss = (fallback_per_node_loss * target_tensors['mask']).sum(dim=1)
-            batch['data'].update(target_tensors)
-            batch['signals']['logits'] = fallback_logits
-            batch['signals']['probabilities'] = fallback_probabilities
-            batch['signals']['target_probabilities'] = fallback_target_probabilities
-            batch['signals']['total_probability'] = fallback_target_probabilities.prod(dim=1)
-            batch['signals']['loss'] = fallback_per_word_loss.mean()
-            batch['postprocessed']['targets'] = (fallback_probabilities >= 0.5).long()
-        # Fallback code for this task: fills the batch with neutral predictions.
-        fallback = batch
-
-        ## YOUR CODE HERE
-        return fallback
+            hsoftmax_output = self.hierarchical_softmax(embedding, batch['data']['context_word'])
+            batch['data']['path'] = hsoftmax_output['path']
+            batch['data']['targets'] = hsoftmax_output['targets']
+            batch['data']['mask'] = hsoftmax_output['mask']
+            batch['signals']['logits'] = hsoftmax_output['logits']
+            batch['signals']['probabilities'] = hsoftmax_output['probabilities']
+            batch['signals']['target_probabilities'] = hsoftmax_output['target_probabilities']
+            batch['signals']['total_probability'] = hsoftmax_output['total_probability']
+            batch['signals']['loss'] = hsoftmax_output['loss']
+            batch['postprocessed']['targets'] = (hsoftmax_output['probabilities'] >= 0.5).long()
+        return batch

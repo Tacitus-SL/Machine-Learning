@@ -166,20 +166,20 @@ def _empty_loss_totals(losses):
 
 
 def _compute_losses(losses, batch):
-    signal = next(iter(batch['signals'].values()))
     results = {
-        loss_name: signal.sum() * 0
-        for loss_name in losses
+        loss_name: loss_fn(batch)
+        for loss_name, loss_fn in losses.items()
     }
-    ## YOUR CODE HERE
     return results
 
 
 def _sum_losses(batch_losses):
     total_loss = None
     for loss_value in batch_losses.values():
-        pass
-        ## YOUR CODE HERE
+        if total_loss is None:
+            total_loss = loss_value
+        else:
+            total_loss = total_loss + loss_value
     if total_loss is None:
         return next(iter(batch_losses.values())).sum() * 0
     return total_loss
@@ -208,11 +208,10 @@ def _finalize_loss_totals(loss_totals):
 
 
 def _update_metric_totals(metric_totals, metrics, batch):
-    
-    
     for metric_name, metric_fn in metrics.items():
-        pass
-        ## YOUR CODE HERE
+        enumerator, denominator = metric_fn(batch)
+        metric_totals[metric_name]['enumerator'] += _number(enumerator)
+        metric_totals[metric_name]['denominator'] += _number(denominator)
 
 
 def _finalize_metric_totals(metric_totals):
@@ -293,20 +292,18 @@ def train_model(
                     batch = {'data': batch}
                     batch = _move_to_device(batch, device)
 
-                    ## YOUR CODE HERE
-                    # Implement one training step:
-                    # switch to training mode
-                    # reset gradients
-                    # run the model
-                    # compute named losses
-                    # store named losses and their sum
-                    # backpropagate through the summed loss
-                    # update weights,
-                    # switch the model to evaluation mode
-                    # update metric numerators/denominators.
+                    model.train()
+                    optimizer.zero_grad()
+                    model(batch)
+                    batch_losses = _compute_losses(losses, batch)
+                    total_loss = _sum_losses(batch_losses)
+                    total_loss.backward()
+                    optimizer.step()
+                    model.eval()
+                    _update_metric_totals(train_metrics, metrics, batch)
                     loss_values = {
-                        loss_name: torch.tensor(0.0)
-                        for loss_name in losses
+                        loss_name: _number(loss_value)
+                        for loss_name, loss_value in batch_losses.items()
                     }
 
                     _update_loss_totals(train_losses, loss_values)
@@ -332,16 +329,13 @@ def train_model(
                         valid_batch = {'data': valid_batch}
                         valid_batch = _move_to_device(valid_batch, device)
 
-                        ## YOUR CODE HERE
-                        # Implement one validation step:
-                        # switch the model to evaluation mode
-                        # run the model without gradients
-                        # compute and store named validation losses
-                        # and update metric numerators/denominators. 
-                        # Do not call backward() or step().
+                        model.eval()
+                        model(valid_batch)
+                        valid_batch_losses = _compute_losses(losses, valid_batch)
+                        _update_metric_totals(valid_metrics, metrics, valid_batch)
                         valid_loss_values = {
-                            loss_name: torch.tensor(0.0)
-                            for loss_name in losses
+                            loss_name: _number(loss_value)
+                            for loss_name, loss_value in valid_batch_losses.items()
                         }
 
                         _update_loss_totals(valid_losses, valid_loss_values)

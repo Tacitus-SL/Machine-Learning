@@ -7,20 +7,21 @@ class SimpleFCNN(torch.nn.Module):
             n_classes=10,
             activation=torch.nn.ReLU):
         super().__init__()
-        with torch.random.fork_rng(devices=[]):
-            self.placeholder = torch.nn.Linear(
-                channels[0] if channels else 28 * 28, n_classes)
-        ## YOUR CODE HERE
-        # Define network modules in the constructor
+        channels = channels if channels is not None else [28 * 28]
+
+        backbone_layers = []
+        for i in range(len(channels) - 1):
+            backbone_layers.append(torch.nn.Linear(channels[i], channels[i + 1]))
+            backbone_layers.append(activation())
+        self.backbone = torch.nn.Sequential(*backbone_layers)
+
+        self.classifier = torch.nn.Linear(channels[-1], n_classes)
         
         
     def __forward_kernel(self, signal):
         signal = signal.reshape([signal.shape[0], -1])
-        if hasattr(self, 'placeholder'):
-            signal = self.placeholder(signal) * 0
-        ## YOUR CODE HERE
-        # Pass the signal through the modules in forward
-        
+        signal = self.backbone(signal)
+        signal = self.classifier(signal)
         return signal
 
     def forward(self, batch):
@@ -40,10 +41,7 @@ class SimpleFCNN(torch.nn.Module):
         # Take network's output from the batch
         signal = batch['signals']['output']
         
-        ## YOUR CODE HERE
-        if hasattr(self, 'placeholder'):
-            signal = torch.zeros(
-                signal.shape[0], dtype=torch.long, device=signal.device)
+        predicted = signal.argmax(dim=1)
         
         # Put the processed result into the batch
-        batch['postprocessed'] = {'class': signal}
+        batch['postprocessed'] = {'class': predicted}

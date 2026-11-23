@@ -31,9 +31,8 @@ class MovieRecommender(torch.nn.Module):
         """Return one score per ``(user_id, movie_id)`` pair, shape ``(batch,)``."""
         user_vector = self.user_embedding(user_id)
         movie_vector = self.movie_embedding(movie_id)
-        score = (user_vector * 0).sum(dim=-1) + self.quality[movie_id] * 0
         ## Return the quality of the movie plus the dot product of the two vectors
-        ## YOUR CODE HERE
+        score = (user_vector * movie_vector).sum(dim=-1) + self.quality[movie_id]
         return score
 
     def forward(self, batch):
